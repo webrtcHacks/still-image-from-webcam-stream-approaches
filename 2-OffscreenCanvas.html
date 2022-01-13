@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OffscreenCanvas Capture</title>
+</head>
+<body>
+<label for="interval">Time between images in seconds: </label>
+<input id="interval" type="text" value="1" min="1" pattern="\d+">
+<br>
+<button id="start">Start</button>
+<br>
+<label for="hideVid">Hide video element: </label>
+<input id="hideVid" type="checkbox">
+<video autoplay muted playsinline></video>
+<p>
+    Images captured: <span>0</span>
+</p>
+<br>
+<button id="stop" disabled>Stop & Show Images</button>
+<div id="images"></div>
+<script>
+    // show an error if not supported
+    if(typeof OffscreenCanvas === 'undefined'){
+        const supportError = "OffscreenCanvas is not supported by your browser";
+        const supportErrorSpan = document.createElement('p');
+        supportErrorSpan.style = "color:red;font-size:larger;font-weight:bold";
+        supportErrorSpan.innerText = supportError;
+        document.body.prepend(supportErrorSpan);
+        console.error(supportError);
+    }
+
+    const startBtn = document.querySelector('button#start');
+    const stopBtn = document.querySelector('button#stop');
+    const hideVid = document.querySelector('input#hideVid')
+    const intervalSec = document.querySelector('input#interval');
+    const videoElem = document.querySelector('video');
+    const imageCountSpan = document.querySelector('span');
+    const imagesDiv = document.querySelector('div#images');
+    const storage = [];     // Use this array as our database
+    let stream, captureInterval;
+
+    hideVid.onclick = () => {
+        videoElem.hidden = hideVid.checked;
+    }
+
+    startBtn.onclick = async () => {
+        startBtn.disabled = true;
+
+        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
+
+        stream = await navigator.mediaDevices.getUserMedia({video: true});
+        videoElem.srcObject = stream;
+
+        const canvas = new OffscreenCanvas(1,1);    // needs an initial size
+        const ctx = canvas.getContext("2d");
+
+        // (data check on the interval value) * that value is in seconds  * frame timestamps are in microseconds
+        const interval = (parseInt(intervalSec.value) >= 1 ? intervalSec.value * 1 : 1) * 1000;
+        captureInterval = setInterval(async () => {
+            // I am not assuming the source video has fixed dimensions
+            canvas.height = videoElem.videoHeight;
+            canvas.width = videoElem.videoWidth;
+            ctx.drawImage(videoElem, 0, 0);
+            const bitmap = canvas.transferToImageBitmap();
+            console.log(bitmap);
+            storage.push(bitmap);
+            imageCountSpan.innerText++;
+        }, interval);
+
+        stopBtn.disabled = false;
+    }
+
+    stopBtn.onclick = () => {
+        // stop capture
+        clearInterval(captureInterval);
+
+        // close the camera
+        stream.getTracks().forEach(track => track.stop());
+
+        // Display each image
+        async function showImages() {
+            const bitmap = storage.shift();
+            const width = bitmap.width;
+            const height = bitmap.height;
+
+            console.log(bitmap);
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            // Common method
+            // const ctx = canvas.getContext("2d");
+            // ctx.drawImage(frame, 0, 0);
+
+            // less resource intensive method but no Safari support
+            const ctx = canvas.getContext("bitmaprenderer");
+            ctx.transferFromImageBitmap(bitmap);
+            imagesDiv.appendChild(canvas);
+
+            if (storage.length > 0)
+                await showImages();
+        }
+        console.log("stored images");
+        showImages();
+    }
+</script>
+</body>
+</html>

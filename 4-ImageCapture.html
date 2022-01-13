@@ -26,6 +26,7 @@
 <button id="stop" disabled>Stop & Show Images</button>
 <div id="images"></div>
 <script>
+    // check for support
     if(typeof ImageCapture === 'undefined'){
         const supportError = "ImageCapture is not supported by your browser";
         const supportErrorSpan = document.createElement('p');

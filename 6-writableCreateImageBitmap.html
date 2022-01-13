@@ -31,6 +31,7 @@
         const [track] = stream.getVideoTracks();
         const readable = (new MediaStreamTrackProcessor(track)).readable;
 
+        // vars to control our read loop
         let last = 0;
         let frameCount = 0;
 
@@ -49,7 +50,7 @@
                     imageCountSpan.innerText++;
                     last = frame.timestamp;
                 }
-                // else                             // browser only seems to let you have 3 frames open
+                // browser only seems to let you have 3 frames open
                 frame.close();
             },
             close: () => console.log("stream closed"),
