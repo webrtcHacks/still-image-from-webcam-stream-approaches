@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PureJS Video Element Capture</title>
+</head>
+<body>
+<label for="interval">Time between images in seconds: </label>
+<input id="interval" type="text" value="1" min="1" pattern="\d+">
+<br>
+<button id="start">Start</button>
+<p>
+    Images captured: <span>0</span>
+</p>
+<br>
+<button id="stop" disabled>Stop & Show Images</button>
+<div id="images"></div>
+<script>
+    const startBtn = document.querySelector('button#start');
+    const stopBtn = document.querySelector('button#stop');
+    const intervalSec = document.querySelector('input#interval');
+    const imageCountSpan = document.querySelector('span');
+    const imagesDiv = document.querySelector('div#images');
+    const bitmaps = [];     // Use this array as our database
+    let stream;
+
+    startBtn.onclick = async () => {
+        startBtn.disabled = true;
+
+        stream = await navigator.mediaDevices.getUserMedia({video: true});
+        const [track] = stream.getVideoTracks();
+        const readable = (new MediaStreamTrackProcessor(track)).readable;
+
+        let last = 0;
+        let frameCount = 0;
+
+        const queuingStrategy = new CountQueuingStrategy({highWaterMark: 1});
+        const writableStream = new WritableStream({
+            write: async frame => {
+                frameCount++;
+                // (data check on the interval value) * that value is in seconds * frame timestamps are in microseconds
+                const interval = (parseInt(intervalSec.value) >= 1 ? intervalSec.value * 1: 1) * 1000 * 1000;
+                // Note: it can take a few frames for the camera sensor to warm up - wait a few or add a check here
+                if (frameCount > 10 && frame.timestamp > last + interval) {
+                    const bitmap = await createImageBitmap(frame);
+                    console.log(frame);
+                    bitmaps.push(bitmap);
+                    frameCount++;
+                    imageCountSpan.innerText++;
+                    last = frame.timestamp;
+                }
+                // else                             // browser only seems to let you have 3 frames open
+                frame.close();
+            },
+            close: () => console.log("stream closed"),
+            abort: () => console.log("stream aborted"),
+        }, queuingStrategy);
+
+        stopBtn.disabled = false;
+        await readable.pipeTo(writableStream);
+    }
+
+    stopBtn.onclick = () => {
+        // close the camera
+        stream.getTracks().forEach(track => track.stop());
+
+        // Display each image
+        async function showImages() {
+            const bitmap = bitmaps.shift();
+            const width = bitmap.width;
+            const height = bitmap.height;
+
+            console.log(bitmap);
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            // Common method
+            // const ctx = canvas.getContext("2d");
+            // ctx.drawImage(frame, 0, 0);
+
+            // less resource intensive method but no Safari support
+            const ctx = canvas.getContext("bitmaprenderer");
+            ctx.transferFromImageBitmap(bitmap);
+            imagesDiv.appendChild(canvas);
+
+            if (bitmaps.length > 0)
+                await showImages();
+        }
+        console.log("stored images");
+        showImages();
+    }
+</script>
+</body>
+</html>

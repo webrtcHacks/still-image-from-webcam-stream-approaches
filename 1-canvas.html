@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PureJS Video Element Capture</title>
+</head>
+<body>
+<label for="interval">Time between images in seconds: </label>
+<input id="interval" type="text" value="1" min="1" pattern="\d+">
+<br>
+<button id="start">Start</button>
+<br>
+<label for="hideVid">Hide video element: </label>
+<input id="hideVid" type="checkbox">
+<video autoplay muted playsinline></video>
+<p>
+    Images captured: <span>0</span>
+</p>
+<br>
+<button id="stop" disabled>Stop & Show Images</button>
+<div id="images"></div>
+<script>
+    const startBtn = document.querySelector('button#start');
+    const stopBtn = document.querySelector('button#stop');
+    const hideVid = document.querySelector('input#hideVid')
+    const intervalSec = document.querySelector('input#interval');
+    const videoElem = document.querySelector('video');
+    const imageCountSpan = document.querySelector('span');
+    const imagesDiv = document.querySelector('div#images');
+    const storage = [];     // Use this array as our database
+    let stream, captureInterval;
+
+    hideVid.onclick = () => {
+        videoElem.hidden = hideVid.checked;
+    }
+
+    startBtn.onclick = async () => {
+        startBtn.disabled = true;
+
+        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
+
+        stream = await navigator.mediaDevices.getUserMedia({video: true});
+        videoElem.srcObject = stream;
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // (data check on the interval value) * that value is in seconds  * frame timestamps are in microseconds
+        const interval = (parseInt(intervalSec.value) >= 1 ? intervalSec.value * 1 : 1) * 1000;
+        captureInterval = setInterval(async () => {
+
+            // I am not assuming the source video has fixed dimensions
+            canvas.height = videoElem.videoHeight;
+            canvas.width = videoElem.videoWidth;
+            ctx.drawImage(videoElem, 0, 0);
+            // happens with the first image in Firefox; should wrap this in a videoElem.onplay
+            canvas.toBlob(blob => {
+                if (blob === null) {
+                    console.log("Failed to convert canvas to blob");
+                    return
+                }
+                console.log(blob);
+                storage.push(blob);
+                imageCountSpan.innerText++;
+            });
+        }, interval);
+
+        stopBtn.disabled = false;
+    }
+
+    stopBtn.onclick = () => {
+        // stop capture
+        clearInterval(captureInterval);
+
+        // close the camera
+        // stream.getTracks().forEach(track => track.stop());
+
+        // Display each image
+        function showImages() {
+            const blob = storage.shift();
+            const imageUrl = window.URL.createObjectURL(blob);
+            const imgElem = new Image();
+            imgElem.src = imageUrl;
+            imagesDiv.appendChild(imgElem);
+
+            if (storage.length > 0)
+                showImages();
+        }
+
+        console.log("stored images");
+        showImages();
+    }
+</script>
+</body>
+</html>

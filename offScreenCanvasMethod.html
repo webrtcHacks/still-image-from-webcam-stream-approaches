@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PureJS Video Element Capture</title>
+    <title>Offscreen Canvas Method</title>
 </head>
 <body>
 <label for="interval">Time between images in seconds: </label>
@@ -31,35 +31,9 @@
         const [track] = stream.getVideoTracks();
         const {width, height} = track.getSettings();
 
-        const readable = (new MediaStreamTrackProcessor(track)).readable;
-
         const canvas = new OffscreenCanvas(width, height);
         const ctx = canvas.getContext("2d");
 
-        let last = 0;
-
-        const queuingStrategy = new CountQueuingStrategy({highWaterMark: 1});
-        const writableStream = new WritableStream({
-            write: async frame => {
-                // (data check on the interval value) * that value is in seconds  * frame timestamps are in microseconds
-                const interval = (parseInt(intervalSec.value) >= 1 ? intervalSec.value * 1: 1) * 1000 * 1000;
-                if (frame.timestamp > last + interval) {
-                    ctx.drawImage(frame, 0, 0);
-                    const blob = await canvas.convertToBlob({type: "image/jpeg"});
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    console.log(frame);
-                    imageBlobs.push(blobUrl);
-                    imageCountSpan.innerText++;
-                    last = frame.timestamp;
-                }
-                frame.close();
-            },
-            close: () => console.log("stream closed"),
-            abort: () => console.log("stream aborted"),
-        }, queuingStrategy);
-
-        stopBtn.disabled = false;
-        await readable.pipeTo(writableStream);
     }
 
     stopBtn.onclick = () => {
