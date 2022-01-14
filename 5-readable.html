@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>PureJS Video Element Capture</title>
 </head>
+<body>
 <span class="error"></span>
 <br>
 <label for="interval">Time between images in seconds: </label>
@@ -53,14 +54,14 @@
         const reader = await processor.readable.getReader();
 
         async function readFrame() {
-            const {value, done} = await reader.read();
+            const {value: frame, done} = await reader.read();
             // value = frame
-            if (value) {
-                const bitmap = await createImageBitmap(value);
+            if (frame) {
+                const bitmap = await createImageBitmap(frame);
                 console.log(bitmap);
                 storage.push(bitmap);
                 imageCountSpan.innerText++;
-                value.close();
+                // frame.close();
             }
             if (done)
                 clearInterval(captureInterval);

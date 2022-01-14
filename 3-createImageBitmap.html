@@ -66,11 +66,6 @@
             const canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
-            // Common method
-            // const ctx = canvas.getContext("2d");
-            // ctx.drawImage(frame, 0, 0);
-
-            // less resource intensive method
             const ctx = canvas.getContext("bitmaprenderer");
             ctx.transferFromImageBitmap(bitmap);
             imagesDiv.appendChild(canvas);

@@ -79,7 +79,7 @@
             // const ctx = canvas.getContext("2d");
             // ctx.drawImage(frame, 0, 0);
 
-            // less resource intensive method but no Safari support
+            // less resource intensive method
             const ctx = canvas.getContext("bitmaprenderer");
             ctx.transferFromImageBitmap(bitmap);
             imagesDiv.appendChild(canvas);
