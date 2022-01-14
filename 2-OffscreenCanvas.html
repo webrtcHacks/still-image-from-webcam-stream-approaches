@@ -5,6 +5,8 @@
     <title>OffscreenCanvas Capture</title>
 </head>
 <body>
+<span class="error"></span>
+<br>
 <label for="interval">Time between images in seconds: </label>
 <input id="interval" type="text" value="1" min="1" pattern="\d+">
 <br>
@@ -23,10 +25,9 @@
     // show an error if not supported
     if(typeof OffscreenCanvas === 'undefined'){
         const supportError = "OffscreenCanvas is not supported by your browser";
-        const supportErrorSpan = document.createElement('p');
-        supportErrorSpan.style = "color:red;font-size:larger;font-weight:bold";
-        supportErrorSpan.innerText = supportError;
-        document.body.prepend(supportErrorSpan);
+        const errorSpan = document.querySelector('span.error');
+        errorSpan.style = "color:red;font-size:larger;font-weight:bold";
+        errorSpan.innerText = supportError;
         console.error(supportError);
     }
 
@@ -40,16 +41,12 @@
     const storage = [];     // Use this array as our database
     let stream, captureInterval;
 
-    hideVid.onclick = () => {
-        videoElem.hidden = hideVid.checked;
-    }
-
+    hideVid.onclick = () => videoElem.hidden = hideVid.checked;
     startBtn.onclick = async () => {
         startBtn.disabled = true;
 
-        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
-
         stream = await navigator.mediaDevices.getUserMedia({video: true});
+        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
         videoElem.srcObject = stream;
 
         const canvas = new OffscreenCanvas(1,1);    // needs an initial size

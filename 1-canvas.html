@@ -30,16 +30,12 @@
     const storage = [];     // Use this array as our database
     let stream, captureInterval;
 
-    hideVid.onclick = () => {
-        videoElem.hidden = hideVid.checked;
-    }
-
+    hideVid.onclick = () => videoElem.hidden = hideVid.checked;
     startBtn.onclick = async () => {
         startBtn.disabled = true;
 
-        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
-
         stream = await navigator.mediaDevices.getUserMedia({video: true});
+        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
         videoElem.srcObject = stream;
 
         const canvas = document.createElement("canvas");
@@ -73,7 +69,7 @@
         clearInterval(captureInterval);
 
         // close the camera
-        // stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => track.stop());
 
         // Display each image
         function showImages() {

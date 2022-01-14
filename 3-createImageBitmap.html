@@ -30,16 +30,12 @@
     const storage = [];     // Use this array as our database
     let stream, captureInterval;
 
-    hideVid.onclick = ()=> {
-        videoElem.hidden = hideVid.checked;
-    }
-
-    videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
-
+    hideVid.onclick = () => videoElem.hidden = hideVid.checked;
     startBtn.onclick = async () => {
         startBtn.disabled = true;
 
         stream = await navigator.mediaDevices.getUserMedia({video: true});
+        videoElem.onplaying = () => console.log("video playing stream:", videoElem.srcObject);
         videoElem.srcObject = stream;
 
         const interval = (parseInt(intervalSec.value) >= 1 ? intervalSec.value * 1: 1) * 1000;
@@ -74,7 +70,7 @@
             // const ctx = canvas.getContext("2d");
             // ctx.drawImage(frame, 0, 0);
 
-            // less resource intensive method but no Safari support
+            // less resource intensive method
             const ctx = canvas.getContext("bitmaprenderer");
             ctx.transferFromImageBitmap(bitmap);
             imagesDiv.appendChild(canvas);
