@@ -16,7 +16,7 @@
 <input id="hideVid" type="checkbox">
 <video autoplay muted playsinline></video>
 <p>
-    Images captured: <span>0</span>
+    Images captured: <span id="image_count">0</span>
 </p>
 <br>
 <button id="stop" disabled>Stop & Show Images</button>
@@ -36,7 +36,7 @@
     const hideVid = document.querySelector('input#hideVid')
     const intervalSec = document.querySelector('input#interval');
     const videoElem = document.querySelector('video');
-    const imageCountSpan = document.querySelector('span');
+    const imageCountSpan = document.querySelector('span#image_count');
     const imagesDiv = document.querySelector('div#images');
     const storage = [];     // Use this array as our database
     let stream, captureInterval;
